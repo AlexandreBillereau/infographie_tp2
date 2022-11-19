@@ -6,8 +6,8 @@ let pyramide_scale = [.2,.2,.2]
 let pyramide_rotation = [180,1,0,0]
 
 // Propriétés des étoiles
-let n_stars = 64;
-let star_color = [1,1,1,1]
+let n_stars = 15;
+let star_color = [1,1,1]
 let star_size = 2.0
 let stars = {x: [], y: [], z: []}
 
@@ -30,6 +30,9 @@ let satelliteIFS;
 let fichier_satellite = "satellite_solution.obj"
 let satellite_orbit_duration = 3; // seconds
 let satellite_orbit_angle = 0; // theta1
+
+//scene
+let scene = []
 
 
 function generate_randomStars() {
@@ -60,15 +63,21 @@ function degToRad(deg){
   return deg*Math.PI/180
 }
 
+//https://stackoverflow.com/questions/1527803/generating-random-whole-numbers-in-javascript-in-a-specific-range
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
 function draw_scene() {
     // Fonction principale pour dessiner la scène complète
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     camera.apply()
 
-    scene = new Scene()
-    drawable = scene.create()
+    //mise a l'échelle de la scène
+    glScalef(.1,.1,.1)
 
-    drawable.forEach(element => {
+    //déssiner -> injection de dépendance
+    scene.forEach(element => {
         element.draw()
     });
 
@@ -94,6 +103,8 @@ function init() {
             e + "</b></p>";
         return;
     }
+
+    // console.log(getRandomArbitrary(0, 180).toFixed(1))
 
     // États d'OpenGL à activer
     glEnable(GL_POINT_SMOOTH);
@@ -125,12 +136,17 @@ function init() {
     // Pour l'interactivité avec la souris.
     camera.installTrackball(draw_scene);
 
+    //creation de la scene
+    scene = new Scene().create()
+    
+
     // Premier appel de update()
     update();
 }
 
 
 class Drawable{
+
 
     constructor(){
         if(this.constructor == Drawable){
@@ -153,25 +169,27 @@ class Drawable{
 }
 
 class Orbite extends Drawable{
-    constructor(color){
+    constructor(color, rayon = 1 ,position = [0,0,0]){
         super()
         if(this._color_not_three_args(color)){
             throw "Sphere constructeur n'a pas un code rgb en couleur"
         }
 
         this.color = color
+        this.position = position
+        this.rayon = rayon * orbit_scaling;
     }
 
     draw(){
-        var rayon = 1*orbit_scaling;
         var nSegments = 64;
 
         glPushMatrix()
         glBegin(GL_LINE_LOOP);
+        glTranslatef(...this.position)
         for (var i = 0; i < nSegments; i++) {
             var angle = 2 * Math.PI * i / nSegments;
-            var x = rayon * Math.cos(angle);
-            var y = rayon * Math.sin(angle);
+            var x = this.rayon * Math.cos(angle);
+            var y = this.rayon * Math.sin(angle);
             glColor3f(...this.color)
             glVertex2f( x, y);
         }
@@ -181,14 +199,17 @@ class Orbite extends Drawable{
 }
 
 class Sphere extends Drawable{
+
+    IFS = sphereIFS
     
-    constructor(IFS, color, scale, x, y){
+    constructor(color, scale, x, y, z=0){
 
         super()
+        this.x = x
+        this.y = y
+        this.z = z
 
-        this._IFS = IFS;
-        this.x = x;
-        this.y = y;
+        // console.log(x)
 
         if(this._color_not_three_args(color)){
             throw "Sphere constructeur n'a pas un code rgb en couleur"
@@ -197,8 +218,8 @@ class Sphere extends Drawable{
             throw "Sphere construsteur n'a pas trois argument"
         }
 
-        this._color = color;
-        this._scale = scale;
+        this._color = color
+        this._scale = scale
 
 
     }
@@ -211,15 +232,14 @@ class Sphere extends Drawable{
         glEnableClientState(GL_NORMAL_ARRAY)
         glEnableClientState(GL_VERTEX_ARRAY)
         // glEnableClientState(GL_TEXTURE_COORD_ARRAY)
-        glVertexPointer(3.0, GL_FLOAT, 0, this._IFS.vertexPositions)
-        glNormalPointer(GL_FLOAT, 0, this._IFS.vertexNormals)
+        glVertexPointer(3.0, GL_FLOAT, 0, this.IFS.vertexPositions)
+        glNormalPointer(GL_FLOAT, 0, this.IFS.vertexNormals)
         // glTexCoordPointer(2, GL_FLOAT, 0,  this._IFS.texturePositions)
         
-        glTranslatef(this.x, this.y  , 0)
+        glTranslatef(this.x, this.y, this.z)
         glColor3f(...this._color)
         glScalef(...this._scale)
-        glDrawElements(GL_TRIANGLE_FAN, this._IFS.parts["Sphere_Sphere.001"].length , GL_UNSIGNED_INT, this._IFS.parts["Sphere_Sphere.001"])
-        // console.log(this._IFS)
+        glDrawElements(GL_TRIANGLE_FAN, this.IFS.parts["Sphere_Sphere.001"].length , GL_UNSIGNED_INT, this.IFS.parts["Sphere_Sphere.001"])
         
         glPopMatrix()
 
@@ -256,11 +276,11 @@ class Pyramide extends Drawable{
 
 class L1 extends Pyramide{
 
-    constructor(){
+    static rayon = 0.7 * orbit_scaling
 
-        var rayon = 0.7 * orbit_scaling
-        var x = rayon * Math.cos(degToRad(0))
-        var y = rayon * Math.sin(degToRad(180))
+    constructor(){
+        var x = L1.x()
+        var y = L1.y()
 
         //Rouge
         var color = [1,0,0]
@@ -268,19 +288,45 @@ class L1 extends Pyramide{
         super(x,y,color);
     }
 
+    static x(){
+        return L1.rayon * Math.cos(degToRad(0))
+    }
+
+    static y(){
+        return L1.rayon * Math.sin(degToRad(180))
+    }
+
+    static z(){
+        return 0
+    }
+
 }
 
 class L2 extends Pyramide{
+
+    static rayon = 1.3 * orbit_scaling
+
     constructor(){
 
-        var rayon = 1.3 * orbit_scaling
-        var x = rayon * Math.cos(degToRad(0))
-        var y = rayon * Math.sin(degToRad(180))
+        var x = L2.x()
+        var y = L2.y()
 
         //Vert
         var color = [0,1,0]
 
         super(x,y,color);
+    }
+
+    static x(){
+        return L2.rayon * Math.cos(degToRad(0))
+    }
+
+    static y(){
+        return L2.rayon * Math.sin(degToRad(180))
+    }
+
+    static z(){
+        return 0
     }
 
 }
@@ -330,7 +376,6 @@ class L5 extends Pyramide{
 
 }
 
-
 class Earth extends Sphere{
 
     constructor(){
@@ -338,15 +383,58 @@ class Earth extends Sphere{
         var x = rayon * Math.cos(degToRad(0))
         var y = rayon * Math.sin(degToRad(180))
 
-        super(sphereIFS, [0,1,0], [.5,.5,.5], x, y)
+        super([0,1,0], [.5,.5,.5], x, y)
     }
 
+}
+
+class L2_Orbite extends Orbite{
+    constructor(){
+        var rayon = 1/8
+        var color = [0,1,0]
+        var position = [L2.x(), L2.y(), L2.z()]
+        super(color, rayon, position)
+    }
+}
+
+class Star extends Sphere{
+
+    static min_deg = -180
+    static max_deg = 180
+    static one_digit = 1
+
+    // r = rayon
+    static min_r = 1.1
+    static max_r = 2
+
+    constructor(){
+        super(star_color, [.05,.05,.05], ...Star.xyz() )
+
+    }
+
+    static xyz(){
+        var position = []
+        var rayon = getRandomArbitrary(Star.min_r, Star.max_r).toFixed(Star.one_digit) * orbit_scaling
+        var deg = degToRad(getRandomArbitrary(Star.min_deg, Star.max_deg).toFixed(Star.one_digit))
+
+        //push x
+        position.push(rayon *Math.cos(deg))
+
+        //pus y
+        position.push(rayon * Math.sin(deg))
+
+        //push z
+        position.push(getRandomArbitrary(-2, 2).toFixed(Star.one_digit) * orbit_scaling)
+        
+        return position
+
+    }
 }
 
  UsableObject = {
 
     Sun(){
-        return new Sphere(sphereIFS, [1,1,0], [1,1,1], 0, 0)
+        return new Sphere([1,1,0], [1,1,1], 0, 0)
     },
 
     pyramide(){
@@ -379,6 +467,14 @@ class Earth extends Sphere{
 
     Earth(){
         return new Earth()
+    },
+    
+    L2_Orbite(){
+        return new L2_Orbite()
+    },
+
+    Star(){
+        return new Star()
     }
 
 }
@@ -387,8 +483,7 @@ class Scene {
 
     //ajouter les élements que l'on veux voir dans la scène.
     create(){
-        scene = []
-        glScalef(.1,.1,.1)
+        var scene = []
 
         scene.push(UsableObject.Sun())
         scene.push(UsableObject.L1())
@@ -398,6 +493,10 @@ class Scene {
         scene.push(UsableObject.L5())
         scene.push(UsableObject.Orbite())
         scene.push(UsableObject.Earth())
+        scene.push(UsableObject.L2_Orbite())
+        for(var star_created = 0; star_created < n_stars; star_created++){
+            scene.push(UsableObject.Star())
+        }
 
         return scene
     }
