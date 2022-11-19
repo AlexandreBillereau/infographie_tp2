@@ -110,7 +110,9 @@ function init() {
     glEnable(GL_POINT_SMOOTH);
 
     // glEnable(GL_LIGHTING);
-    // TODO: gerer la lumiere
+    // TODO: imposible car le cour ne montre pas comment avoir que une seul normale par sommet 
+    // quand on utilise glDrawElement 
+    // si j'avais pu le faire moi même sans cette fonction j'aurais eu les points de la lumière.  
 
     glEnable(GL_NORMALIZE);
     glEnable(GL_DEPTH_TEST);
@@ -127,11 +129,10 @@ function init() {
     // Load the satellite
     // satelliteIFS = loadOBJFile(fichier_satellite); // TODO: c) Décommenter cette ligne pour importer votre satellite
 
-    // Génération d'étoiles
-    // generate_randomStars() // TODO: a) Décommenter cette ligne
 
     // TODO b) : Importer les textures
     // VOTRE CODE ICI
+    
 
     // Pour l'interactivité avec la souris.
     camera.installTrackball(draw_scene);
@@ -209,7 +210,6 @@ class Sphere extends Drawable{
         this.y = y
         this.z = z
 
-        // console.log(x)
 
         if(this._color_not_three_args(color)){
             throw "Sphere constructeur n'a pas un code rgb en couleur"
@@ -231,17 +231,20 @@ class Sphere extends Drawable{
 
         glEnableClientState(GL_NORMAL_ARRAY)
         glEnableClientState(GL_VERTEX_ARRAY)
-        // glEnableClientState(GL_TEXTURE_COORD_ARRAY)
         glVertexPointer(3.0, GL_FLOAT, 0, this.IFS.vertexPositions)
         glNormalPointer(GL_FLOAT, 0, this.IFS.vertexNormals)
-        // glTexCoordPointer(2, GL_FLOAT, 0,  this._IFS.texturePositions)
         
         glTranslatef(this.x, this.y, this.z)
         glColor3f(...this._color)
+        glMaterialfv( GL_FRONT, GL_DIFFUSE, [...this._color, 1] )
+        glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, 1);
         glScalef(...this._scale)
+
         glDrawElements(GL_TRIANGLE_FAN, this.IFS.parts["Sphere_Sphere.001"].length , GL_UNSIGNED_INT, this.IFS.parts["Sphere_Sphere.001"])
         
         glPopMatrix()
+
+
 
     }
 }
@@ -264,6 +267,7 @@ class Pyramide extends Drawable{
         glPushMatrix()
         glVertexPointer(3, GL_FLOAT, 0, tetraedre_vertex_coords)
         glColor3f(...this.color)
+        
         glTranslatef(this.x, this.y, 0)
         glRotatef(...pyramide_rotation)
         glScalef(...pyramide_scale)
@@ -271,6 +275,7 @@ class Pyramide extends Drawable{
         glEnableClientState( GL_COLOR_ARRAY )
         glDrawElements( GL_TRIANGLES, 12, GL_UNSIGNED_INT, sommet_indice )
         glPopMatrix()
+
     }
 }
 
@@ -434,7 +439,7 @@ class Star extends Sphere{
  UsableObject = {
 
     Sun(){
-        return new Sphere([1,1,0], [1,1,1], 0, 0)
+        return new Sphere([1,1,0], [1,1,1], 0, 0, 0,true)
     },
 
     pyramide(){
