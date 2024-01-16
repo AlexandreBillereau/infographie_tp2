@@ -4,15 +4,14 @@
 
 ## Lancer le projet.
 
-installer un serveur live sur votre editeur (vscode) et ouvrer le fichier html avec.
+Installez un serveur en direct sur votre éditeur (VSCode) et ouvrez le fichier HTML.
 
 ## Principe clean code
 
-Certaine fonctions du projets ne sont pas remplit car elle ne fesait pas parti des principes de code Qualité.
-L'injections de dépendance est ici privilégier.
+Certaines fonctions du projet ne sont pas implémentées car elles ne respectaient pas les principes du code de qualité. L'injection de dépendances est privilégiée ici.
 
-Mais le projet est belle est bien mené a ca fin.
+Cependant, le projet est bel et bien mené à sa fin.
 
 ## Sujet
 
-voir le pdf dans archive.
+Consultez le PDF dans l'archive
